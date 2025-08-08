@@ -58,3 +58,13 @@
 [submodule "thirdparty/ffmpeg-core"]
 	path = thirdparty/ffmpeg-core
 	url = https://github.com/sonicnext-dev/ffmpeg-core
+[submodule "thirdparty/curl"]
+	path = thirdparty/curl
+	url = https://github.com/curl/curl.git
+[submodule "thirdparty/wolfssl"]
+	path = thirdparty/wolfssl
+	url = https://github.com/wolfSSL/wolfssl.git
+        shallow = true
+[submodule "thirdparty/freetype"]
+	path = thirdparty/freetype
+	url = https://github.com/freetype/freetype.git

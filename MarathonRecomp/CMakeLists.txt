@@ -357,8 +357,6 @@ if (MARATHON_RECOMP_FLATPAK)
     )
 endif()
 
-find_package(CURL REQUIRED)
-
 if (MARATHON_RECOMP_METAL)
     target_compile_definitions(MarathonRecomp PRIVATE MARATHON_RECOMP_METAL)
 endif()
@@ -408,7 +406,7 @@ target_link_libraries(MarathonRecomp PRIVATE
     tomlplusplus::tomlplusplus
     MarathonRecompLib
     xxHash::xxhash
-    CURL::libcurl
+    libcurl_static
     plume
 )
 

@@ -1,5 +1,4 @@
 #include "aspect_ratio_patches.h"
-#include <api/Marathon.h>
 #include <gpu/video.h>
 #include <hid/hid.h>
 #include <patches/hook_event.h>
@@ -1543,6 +1542,20 @@ void ReplaceTextVariables(Sonicteam::TextEntity* pTextEntity)
     }
 }
 
+void SetTextEntityModifier(Sonicteam::TextEntity* pTextEntity, uint64_t flags)
+{
+    if (!pTextEntity)
+        return;
+
+    const auto pTextModifier = reinterpret_cast<uint64_t*>(
+        reinterpret_cast<uint8_t*>(pTextEntity) + sizeof(Sonicteam::TextEntity));
+
+    *pTextModifier = flags;
+
+    pTextEntity->m_FieldDD = true;
+    pTextEntity->Update();
+}
+
 void TextEntityAlloc(PPCRegister& r3)
 {
     r3.u32 += sizeof(uint64_t);
@@ -1639,19 +1652,6 @@ PPC_FUNC(sub_8262D868)
     pTextEntity->m_ScaleY = scaleY;
 
     ReplaceTextVariables(pTextEntity);
-}
-
-void SetTextEntityModifier(Sonicteam::TextEntity* pTextEntity, uint64_t flags)
-{
-    if (!pTextEntity)
-        return;
-
-    auto pTextModifier = (uint64_t*)(reinterpret_cast<uint8_t*>(pTextEntity) + sizeof(Sonicteam::TextEntity));
-
-    *pTextModifier = flags;
-
-    pTextEntity->m_FieldDD = true;
-    pTextEntity->Update();
 }
 
 // Sonicteam::HUDMainMenu::Destroy
@@ -2048,7 +2048,7 @@ const xxHashMap<CsdModifier> g_csdModifiers =
     // pausemenu
     { HashStr("sprite/pausemenu/pausemenu/pause_menu"), { CSD_SCALE } },
     { HashStr("sprite/pausemenu/pausemenu/pause_menu_cursor"), { CSD_SCALE } },
-    { HashStr("sprite/pausemenu/pausemenu/mission"), { CSD_SCALE } },
+    { HashStr("sprite/pausemenu/pausemenu/mission"), { CSD_ALIGN_BOTTOM | CSD_SCALE } },
 
     // radarmap_cover
     { HashStr("sprite/radarmap_cover/radarmap_cover/Scene_0000"), { CSD_RADARMAP | CSD_ALIGN_TOP_RIGHT | CSD_SCALE } },

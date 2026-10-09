@@ -334,7 +334,7 @@ struct GuestShader : GuestResource
     ComPtr<IDxcBlobEncoding> libraryBlob;
 #endif
 #ifdef ASYNC_PSO_DEBUG
-    const char* name = "<unknown>";
+    std::string name = "";
 #endif
 };
 

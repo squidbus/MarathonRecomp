@@ -1591,7 +1591,11 @@ enum
 
 static std::unique_ptr<GuestShader> g_gaussianBlurShaders[GAUSSIAN_BLUR_COUNT];
 
+static std::unique_ptr<GuestShader> g_blendColorAlphaPSShader;
+
 static std::unique_ptr<GuestShader> g_csdFilterShader;
+static std::unique_ptr<GuestShader> g_csdVSShader;
+static std::unique_ptr<GuestShader> g_csdNoTexVSShader;
 static GuestShader* g_csdShader;
 
 static std::unique_ptr<GuestShader> g_enhancedBurnoutBlurVSShader;
@@ -2377,8 +2381,17 @@ bool Video::CreateHostDevice(const char* sdlVideoDriver, bool graphicsApiRetry)
     g_gaussianBlurShaders[GAUSSIAN_BLUR_7X7]->shader = CREATE_SHADER(gaussian_blur_7x7);
     g_gaussianBlurShaders[GAUSSIAN_BLUR_9X9]->shader = CREATE_SHADER(gaussian_blur_9x9);
 
+    g_blendColorAlphaPSShader = std::make_unique<GuestShader>(ResourceType::PixelShader);
+    g_blendColorAlphaPSShader->shader = CREATE_SHADER(blend_color_alpha_ps);
+
     g_csdFilterShader = std::make_unique<GuestShader>(ResourceType::PixelShader);
     g_csdFilterShader->shader = CREATE_SHADER(csd_filter_ps);
+
+    g_csdVSShader = std::make_unique<GuestShader>(ResourceType::VertexShader);
+    g_csdVSShader->shader = CREATE_SHADER(csd_vs);
+
+    g_csdNoTexVSShader = std::make_unique<GuestShader>(ResourceType::VertexShader);
+    g_csdNoTexVSShader->shader = CREATE_SHADER(csd_no_tex_vs);
 
     g_enhancedBurnoutBlurVSShader = std::make_unique<GuestShader>(ResourceType::VertexShader);
     g_enhancedBurnoutBlurVSShader->shader = CREATE_SHADER(enhanced_burnout_blur_vs);
@@ -6270,15 +6283,10 @@ static GuestShader* GetOrCreateShader(XXH64_hash_t hash, ResourceType resourceTy
         if (findResult->guestShader == nullptr)
         {
             shader = g_userHeap.AllocPhysical<GuestShader>(resourceType);
-
-            if (hash == 0x85ED723035ECF535)
-                shader->shader = CREATE_SHADER(blend_color_alpha_ps);
-            else if (hash == 0xB1086A4947A797DE)
-                shader->shader = CREATE_SHADER(csd_no_tex_vs);
-            else if (hash == 0xB4CAFC034A37C8A8)
-                shader->shader = CREATE_SHADER(csd_vs);
-            else
-                shader->shaderCacheEntry = findResult;
+            shader->shaderCacheEntry = findResult;
+#ifdef ASYNC_PSO_DEBUG
+            shader->name = findResult->filename;
+#endif
 
             findResult->guestShader = shader;
         }
@@ -6324,11 +6332,29 @@ static void ProcSetVertexShader(const RenderCommand& cmd)
 
     if (shader != nullptr && shader->shaderCacheEntry != nullptr)
     {
+#ifdef ASYNC_PSO_DEBUG
+        GuestShader *originalShader = shader;
+#endif
+
         if (shader->shaderCacheEntry->hash == 0x3687D038CE7D0BEA || shader->shaderCacheEntry->hash == 0xB4DA7A442DBB16CC)
         {
             if (Config::RadialBlur == ERadialBlur::Enhanced)
                 shader = g_enhancedBurnoutBlurVSShader.get();
         }
+        else if (shader->shaderCacheEntry->hash == 0xB1086A4947A797DE)
+        {
+            shader = g_csdNoTexVSShader.get();
+        }
+        else if (shader->shaderCacheEntry->hash == 0xB4CAFC034A37C8A8)
+        {
+            shader = g_csdVSShader.get();
+        }
+
+#ifdef ASYNC_PSO_DEBUG
+        if (shader != originalShader && shader->name.empty()) {
+            shader->name = fmt::format("{} (REPLACED)", originalShader->name);
+        }
+#endif
     }
 
     SetDirtyValue(g_dirtyStates.pipelineState, g_pipelineState.vertexShader, shader);
@@ -6398,9 +6424,12 @@ static void ProcSetPixelShader(const RenderCommand& cmd)
 {
     GuestShader* shader = cmd.setPixelShader.shader;
 
-    if (shader != nullptr &&
-        shader->shaderCacheEntry != nullptr)
+    if (shader != nullptr && shader->shaderCacheEntry != nullptr)
     {
+#ifdef ASYNC_PSO_DEBUG
+        GuestShader *originalShader = shader;
+#endif
+
         if (shader->shaderCacheEntry->hash == 0xDA58F0110A8595D9 || shader->shaderCacheEntry->hash == 0x845A4EF989446C01)
         {
             if (Config::RadialBlur == ERadialBlur::Enhanced)
@@ -6410,6 +6439,16 @@ static void ProcSetPixelShader(const RenderCommand& cmd)
         {
             shader = g_MoviePSShader.get();
         }
+        else if (shader->shaderCacheEntry->hash == 0x85ED723035ECF535)
+        {
+            shader = g_blendColorAlphaPSShader.get();
+        }
+
+#ifdef ASYNC_PSO_DEBUG
+        if (shader != originalShader && shader->name.empty()) {
+            shader->name = fmt::format("{} (REPLACED)", originalShader->name);
+        }
+#endif
     }
 
     SetDirtyValue(g_dirtyStates.pipelineState, g_pipelineState.pixelShader, shader);
@@ -7393,8 +7432,6 @@ static void PipelineTaskConsumerThread()
 
                 for (auto pipelineState : g_pipelineStateCache)
                 {
-                    printf("Precompiling pipeline! Vertex = 0x%llx\n", reinterpret_cast<XXH64_hash_t>(pipelineState.vertexShader));
-
                     // The hashes were reinterpret casted to pointers in the cache.
                     pipelineState.vertexShader = GetOrCreateShader(reinterpret_cast<XXH64_hash_t>(pipelineState.vertexShader), ResourceType::VertexShader);
 
@@ -7514,26 +7551,6 @@ static void PipelineTaskConsumerThread()
 }
 
 static std::thread g_pipelineTaskConsumerThread(PipelineTaskConsumerThread);
-
-#ifdef ASYNC_PSO_DEBUG
-
-// PPC_FUNC_IMPL(__imp__sub_82E33330);
-// PPC_FUNC(sub_82E33330)
-// {
-//     auto vertexShaderCode = reinterpret_cast<Hedgehog::Mirage::CVertexShaderCodeData*>(g_memory.Translate(ctx.r4.u32));
-//     __imp__sub_82E33330(ctx, base);
-//     reinterpret_cast<GuestShader*>(vertexShaderCode->m_pD3DVertexShader.get())->name = vertexShaderCode->m_TypeAndName.c_str() + 3;
-// }
-
-// PPC_FUNC_IMPL(__imp__sub_82E328D8);
-// PPC_FUNC(sub_82E328D8)
-// {
-//     auto pixelShaderCode = reinterpret_cast<Hedgehog::Mirage::CPixelShaderCodeData*>(g_memory.Translate(ctx.r4.u32));
-//     __imp__sub_82E328D8(ctx, base);
-//     reinterpret_cast<GuestShader*>(pixelShaderCode->m_pD3DPixelShader.get())->name = pixelShaderCode->m_TypeAndName.c_str() + 2;
-// }
-
-#endif
 
 #ifdef PSO_CACHING
 class SDLEventListenerForPSOCaching : public SDLEventListener

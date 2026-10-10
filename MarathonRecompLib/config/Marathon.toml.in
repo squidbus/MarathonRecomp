@@ -1,7 +1,7 @@
 [main]
-file_path = "../private/default.xex"
-out_directory_path = "../ppc"
-switch_table_file_path = "./switch_table.toml"
+file_path = "@XENON_RECOMP_IN_XEX_REL@"
+out_directory_path = "@XENON_RECOMP_OUT_DIR_REL@"
+switch_table_file_path = "@XENON_RECOMP_IN_SWITCH_TABLE_REL@"
 
 skip_lr = false
 skip_msr = false

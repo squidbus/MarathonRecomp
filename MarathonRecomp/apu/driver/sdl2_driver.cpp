@@ -70,10 +70,10 @@ static void AudioThread()
     while (!g_audioThreadShouldExit)
     {
         uint32_t queuedAudioSize = SDL_GetQueuedAudioSize(g_audioDevice);
-        constexpr size_t MAX_LATENCY = 10;
+        constexpr size_t MAX_LATENCY = 4;
         const size_t callbackAudioSize = channels * XAUDIO_NUM_SAMPLES * sizeof(float);
 
-        if ((queuedAudioSize / callbackAudioSize) <= MAX_LATENCY)
+        for (size_t i = queuedAudioSize / callbackAudioSize; i <= MAX_LATENCY; i++)
         {
             ctx.ppcContext.r3.u32 = g_clientCallbackParam;
             g_clientCallback(ctx.ppcContext, g_memory.base);
@@ -154,7 +154,7 @@ void XAudioSubmitFrame(void* samples)
             for (size_t j = 0; j < XAUDIO_NUM_CHANNELS; j++)
             {
                 float samp = floatSamples[j * XAUDIO_NUM_SAMPLES + i] * volume;
-                audioFrames[i * 2 + j] = isnan(samp) ? 0.0f : samp;
+                audioFrames[i * XAUDIO_NUM_CHANNELS + j] = isnan(samp) ? 0.0f : samp;
             }
         }
 

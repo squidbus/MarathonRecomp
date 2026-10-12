@@ -489,7 +489,7 @@ public:
             // Pump SDL events to prevent the OS
             // from thinking the process is unresponsive.
             SDL_PumpEvents();
-            SDL_FlushEvents(SDL_FIRSTEVENT, SDL_LASTEVENT);
+            SDL_FlushEvents(SDL_EVENT_FIRST, SDL_EVENT_LAST);
 
             g_compilingPipelineTaskCount.wait(value);
         }
@@ -7406,9 +7406,10 @@ static bool CheckMadeAll(const T& modelData)
 
 static void PipelineTaskConsumerThread()
 {
+    os::thread::SetCurrentThreadName("Pipeline Task Consumer Thread");
+
 #ifdef _WIN32
     SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_IDLE);
-    GuestThread::SetThreadName(GetCurrentThreadId(), "Pipeline Task Consumer Thread");
 #endif
 
     std::vector<PipelineTask> localPipelineTaskQueue;

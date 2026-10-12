@@ -35,6 +35,7 @@
 #include <sdl_listener.h>
 #include <xxHashMap.h>
 #include <os/process.h>
+#include <os/thread.h>
 
 #if defined(ASYNC_PSO_DEBUG) || defined(PSO_CACHING)
 #include <magic_enum/magic_enum.hpp>
@@ -6473,9 +6474,10 @@ static void SetClipPlane(GuestDevice* device, uint32_t index, const be<float>* p
 
 static std::thread g_renderThread([]
     {
+        os::thread::SetCurrentThreadName("Render Thread");
+
 #ifdef _WIN32
         SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_ABOVE_NORMAL);
-        GuestThread::SetThreadName(GetCurrentThreadId(), "Render Thread");
 #endif
 
         RenderCommand commands[32];
@@ -7155,10 +7157,11 @@ static void CompilePipeline(XXH64_hash_t pipelineHash, const PipelineState& pipe
 
 static void PipelineCompilerThread()
 {
+    os::thread::SetCurrentThreadName("Pipeline Compiler Thread");
+
 #ifdef _WIN32
     int threadPriority = THREAD_PRIORITY_LOWEST;
     SetThreadPriority(GetCurrentThread(), threadPriority);
-    GuestThread::SetThreadName(GetCurrentThreadId(), "Pipeline Compiler Thread");
 #endif
 
     std::unique_ptr<GuestThreadContext> ctx;

@@ -48,9 +48,10 @@ add_custom_command(
         $<TARGET_FILE:XenonRecomp> "${XENON_RECOMP_OUT_CONFIG}" "${XENON_RECOMP_IN_PPC_CONTEXT}"
     DEPENDS
         XenonRecomp
-        "${XENON_RECOMP_IN_XEX}"
-        "${XENON_RECOMP_IN_PPC_CONTEXT}"
         "${XENON_RECOMP_OUT_CONFIG}"
+        "${XENON_RECOMP_IN_PPC_CONTEXT}"
+        "${XENON_RECOMP_IN_SWITCH_TABLE}"
+        "${XENON_RECOMP_IN_XEX}"
     USES_TERMINAL
 )
 
@@ -78,11 +79,6 @@ set(XENOS_RECOMP_INCLUDE "${XENOS_RECOMP_ROOT}/shader_common.h")
 
 target_compile_definitions(XenosRecomp PRIVATE MARATHON_RECOMP)
 
-file(GLOB XENOS_RECOMP_SOURCES 
-    "${XENOS_RECOMP_ROOT}/*.h"
-    "${XENOS_RECOMP_ROOT}/*.cpp"
-)
-
 add_custom_command(
     OUTPUT 
         "${XENOS_RECOMP_OUT_FILE}"
@@ -91,7 +87,6 @@ add_custom_command(
     DEPENDS
         XenosRecomp
         "${XENOS_RECOMP_IN_DIR}"
-        ${XENOS_RECOMP_SOURCES}
         ${XENOS_RECOMP_INCLUDE}
     USES_TERMINAL
 )

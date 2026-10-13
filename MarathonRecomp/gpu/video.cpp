@@ -4895,8 +4895,11 @@ static void ProcSetScissorRect(const RenderCommand& cmd)
     SetDirtyValue<int32_t>(g_dirtyStates.scissorRect, g_scissorRect.right, args.right);
 }
 
-static RenderShader* GetOrLinkShader(GuestShader* guestShader, uint32_t specConstants)
+static RenderShader* GetReplacementShader(GuestShader* guestShader)
 {
+    if (guestShader == nullptr)
+        return nullptr;
+
     if (guestShader->shaderCacheEntry != nullptr)
     {
         switch (guestShader->shaderCacheEntry->hash)
@@ -4917,6 +4920,15 @@ static RenderShader* GetOrLinkShader(GuestShader* guestShader, uint32_t specCons
             break;
         }
     }
+
+    return nullptr;
+}
+
+static RenderShader* GetOrLinkShader(GuestShader* guestShader, uint32_t specConstants)
+{
+    auto* replacementShader = GetReplacementShader(guestShader);
+    if (replacementShader != nullptr)
+        return replacementShader;
 
     if (g_backend != Backend::D3D12 ||
         guestShader->shaderCacheEntry == nullptr ||
@@ -5091,6 +5103,21 @@ static RenderShader* GetOrLinkShader(GuestShader* guestShader, uint32_t specCons
     return shader;
 }
 
+static XXH64_hash_t GetPipelineStateHash(const PipelineState& pipelineState)
+{
+    XXH64_hash_t seed = 0;
+
+    // If shaders need to be replaced, make sure they result in a different pipeline hash.
+    struct {
+        RenderShader* vertex;
+        RenderShader* pixel;
+    } replacements(GetReplacementShader(pipelineState.vertexShader), GetReplacementShader(pipelineState.pixelShader));
+    if (replacements.vertex != nullptr || replacements.pixel != nullptr)
+        seed = XXH3_64bits(&replacements, sizeof(replacements));
+
+    return XXH3_64bits_withSeed(&pipelineState, sizeof(pipelineState), seed);
+}
+
 static void SanitizePipelineState(PipelineState& pipelineState)
 {
     if (!pipelineState.zEnable && !pipelineState.stencilEnable)
@@ -5261,7 +5288,7 @@ static RenderPipeline* CreateGraphicsPipelineInRenderThread(PipelineState pipeli
 {
     SanitizePipelineState(pipelineState);
 
-    XXH64_hash_t hash = XXH3_64bits(&pipelineState, sizeof(pipelineState));
+    XXH64_hash_t hash = GetPipelineStateHash(pipelineState);
     auto& pipeline = g_pipelines[hash];
     if (pipeline == nullptr)
     {
@@ -7177,7 +7204,7 @@ static void EnqueueGraphicsPipelineCompilation(
     const char* name,
     bool isPrecompiledPipeline = false)
 {
-    XXH64_hash_t hash = XXH3_64bits(&pipelineState, sizeof(pipelineState));
+    XXH64_hash_t hash = GetPipelineStateHash(pipelineState);
     bool shouldCompile = g_asyncPipelineStates.emplace(hash, pipelineState).second;
 
     if (shouldCompile)
@@ -7611,7 +7638,7 @@ void VideoConfigValueChangedCallback(IConfigDef* config)
 
     if (Video::s_needsResize)
         Video::ComputeViewportDimensions();
-        
+
     // Config options that require pipeline recompilation
     bool shouldRecompile =
         config == &Config::AntiAliasing ||

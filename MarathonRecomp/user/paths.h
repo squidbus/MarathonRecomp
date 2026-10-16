@@ -50,7 +50,7 @@ inline std::filesystem::path GetGamePath()
     {
         dataPath = homePath / ".local" / "share";
     }
-    std::filesystem::path gamePath = dataPath / "MarathonRecomp";
+    std::filesystem::path gamePath = dataPath / USER_DIRECTORY;
     return gamePath;
 #else
     return GAME_INSTALL_DIRECTORY;

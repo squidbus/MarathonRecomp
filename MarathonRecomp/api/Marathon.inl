@@ -12,8 +12,10 @@ constexpr double DEG2RAD = 0.01745329238474369;
 #define MARATHON_CONCAT2(x, y) x##y
 #define MARATHON_CONCAT(x, y) MARATHON_CONCAT2(x, y)
 
-#define MARATHON_INSERT_PADDING(length) \
-    uint8_t MARATHON_CONCAT(pad, __LINE__)[length]
+#define MARATHON_INSERT_PADDING(length)             \
+private:                                            \
+    uint8_t MARATHON_CONCAT(pad, __LINE__)[length]; \
+public:
 
 #define MARATHON_ASSERT_OFFSETOF(type, field, offset) \
     static_assert(offsetof(type, field) == offset)
@@ -25,6 +27,21 @@ constexpr double DEG2RAD = 0.01745329238474369;
     GuestToHostFunction<returnType>(*(be<uint32_t>*)(g_memory.Translate(*(be<uint32_t>*)(this) + (4 * virtualIndex))), __VA_ARGS__)
 
 struct MARATHON_NULL_CTOR {};
+
+template <class T, uint32_t pVftable>
+class MARATHON_VIRTUAL_BASE : public T
+{
+public:
+    MARATHON_VIRTUAL_BASE()
+    {
+        *reinterpret_cast<be<uint32_t>*>(this) = pVftable;
+    }
+
+    static T::Vftable* GetVftable()
+    {
+        return static_cast<T::Vftable*>(MmGetHostAddress(pVftable));
+    }
+};
 
 inline std::vector<std::string_view> ParseTextVariables(const char* pVariables)
 {

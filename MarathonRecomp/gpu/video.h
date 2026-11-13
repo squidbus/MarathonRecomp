@@ -1,9 +1,9 @@
 #pragma once
 
 // Enable to show debug stats related to async pipeline compiles and cache misses.
-//#define ASYNC_PSO_DEBUG
+#define ASYNC_PSO_DEBUG
 // Enable to store uncached pipelines and vertex declarations to "pso_caching.txt" in the game's user directory.
-//#define PSO_CACHING
+#define PSO_CACHING
 // Enable to also output cached pipelines to "pso_caching.txt" to get a full set.
 //#define PSO_CACHING_CLEANUP
 

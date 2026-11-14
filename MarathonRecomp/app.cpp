@@ -10,6 +10,7 @@
 #include <patches/audio_patches.h>
 #include <patches/patches.h>
 #include <ui/game_window.h>
+#include <ui/options_menu.h>
 #include <user/config.h>
 #include <user/paths.h>
 #include <user/registry.h>
@@ -56,6 +57,9 @@ PPC_FUNC(sub_8262A568)
     App::s_isInit = true;
     App::s_isMissingDLC = true;
     App::s_language = Config::Language;
+
+    if (Config::AlwaysUnlockedDebugSettings)
+        OptionsMenu::s_isDebugUnlocked = true;
 
     Sonicteam::Globals::Init();
     Registry::Save();

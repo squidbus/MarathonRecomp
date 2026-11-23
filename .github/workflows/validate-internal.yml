@@ -2,7 +2,7 @@ name: validate-internal
 on:
   push:
     branches:
-      - main
+      - fix-ci4-test
   pull_request:
     types: [opened, synchronize]
 jobs:

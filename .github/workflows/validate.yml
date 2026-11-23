@@ -46,13 +46,14 @@ jobs:
           key: ccache-${{ runner.os }}-${{ matrix.arch.name }}-${{ matrix.preset }}
 
       - name: Generate vcpkg package config
-        run: ./thirdparty/vcpkg/vcpkg install --dry-run --x-write-nuget-packages-config=vcpkg-config.xml
+        working-directory: ./thirdparty/vcpkg
+        run: ./bootstrap-vcpkg.sh && ./vcpkg install --dry-run --x-write-nuget-packages-config=vcpkg-config.xml
   
       - name: Cache vcpkg
         uses: actions/cache@v6
         with:
           path: ~/.cache/vcpkg/archives
-          key: vcpkg-${{ hashFiles('vcpkg-config.xml') }}
+          key: vcpkg-${{ hashFiles('thirdparty/vcpkg/vcpkg-config.xml') }}
 
       - name: Install Dependencies (Linux)
         run: |-
@@ -117,13 +118,14 @@ jobs:
       #    key: ccache-${{ runner.os }}-${{ matrix.preset.name }}
 
       - name: Generate vcpkg package config
-        run: ./thirdparty/vcpkg/vcpkg.exe install --dry-run --x-write-nuget-packages-config=vcpkg-config.xml
+        working-directory: ./thirdparty/vcpkg
+        run: ./bootstrap-vcpkg.bat && ./vcpkg.exe install --dry-run --x-write-nuget-packages-config=vcpkg-config.xml
 
       - name: Cache vcpkg
         uses: actions/cache@v6
         with:
           path: ~/AppData/Local/vcpkg/archives
-          key: vcpkg-${{ hashFiles('vcpkg-config.xml') }}
+          key: vcpkg-${{ hashFiles('thirdparty/vcpkg/vcpkg-config.xml') }}
 
       - name: Install dependencies
         run: |
@@ -265,13 +267,14 @@ jobs:
           key: ccache-${{ runner.os }}-${{ matrix.arch }}-${{ matrix.preset }}
 
       - name: Generate vcpkg package config
-        run: ./thirdparty/vcpkg/vcpkg install --dry-run --x-write-nuget-packages-config=vcpkg-config.xml
+        working-directory: ./thirdparty/vcpkg
+        run: ./bootstrap-vcpkg.sh && ./vcpkg install --dry-run --x-write-nuget-packages-config=vcpkg-config.xml
 
       - name: Cache vcpkg
         uses: actions/cache@v6
         with:
           path: ~/.cache/vcpkg/archives
-          key: vcpkg-${{ hashFiles('vcpkg-config.xml') }}
+          key: vcpkg-${{ hashFiles('thirdparty/vcpkg/vcpkg-config.xml') }}
 
       - name: Install Dependencies (macOS)
         run: |

@@ -1,4 +1,3 @@
-#include <stdafx.h>
 #include "heap.h"
 #include "memory.h"
 #include "function.h"

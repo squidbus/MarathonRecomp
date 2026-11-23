@@ -1,5 +1,3 @@
-#include <stdafx.h>
-
 #include <bit>
 
 #include "audio.h"

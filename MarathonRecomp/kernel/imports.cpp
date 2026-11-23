@@ -1,6 +1,5 @@
 #include <cstdint>
 #include <cstdio>
-#include <stdafx.h>
 #include <cpu/ppc_context.h>
 #include <cpu/guest_thread.h>
 #include <apu/audio.h>

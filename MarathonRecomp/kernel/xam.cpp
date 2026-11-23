@@ -1,6 +1,5 @@
 #include <cstdio>
 #include <fmt/base.h>
-#include <stdafx.h>
 #include "xam.h"
 #include "xdm.h"
 #include <hid/hid.h>

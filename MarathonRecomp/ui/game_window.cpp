@@ -7,7 +7,6 @@
 #include <app.h>
 #include <functional>
 #include <sdl_listener.h>
-#include <stdafx.h>
 
 #if _WIN32
 #include <dwmapi.h>

@@ -1,5 +1,4 @@
 #include "guest_thread.h"
-#include <stdafx.h>
 #include <api/Marathon.h>
 #include <fmt/format.h>
 #include <kernel/memory.h>

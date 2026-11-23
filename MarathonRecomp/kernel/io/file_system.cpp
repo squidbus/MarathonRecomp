@@ -8,7 +8,6 @@
 #include <os/logger.h>
 #include <user/config.h>
 #include <user/paths.h>
-#include <stdafx.h>
 
 struct FileHandle : KernelObject
 {

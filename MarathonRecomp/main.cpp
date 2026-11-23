@@ -1,5 +1,4 @@
 #include <cstdio>
-#include <stdafx.h>
 #ifdef __x86_64__
 #include <cpuid.h>
 #endif

@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include <kernel/function.h>
 #include <kernel/xdm.h>
 
